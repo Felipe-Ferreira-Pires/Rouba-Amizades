@@ -6,7 +6,7 @@ const BtnJogar = document.getElementById ('iniciarJogo')
 const CorPersonagem = document.getElementById ("corPersonagem")
 const NomePersonagem = document.getElementById ("nomePersonagem")
 
-let raio = 40
+let raio = 20
 let x = 500
 let y = 500
 let quadradox= 500
@@ -20,9 +20,18 @@ let lado2 = 30
 let nomeJogador = ""
 let corPersonagem = "white";
 let canvas 
+let novaX,novaY
 let ctx
+let jogador
 const perigosos = []
 
+
+let setas ={
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false
+}
 
 
 function desenharTelaJogo () {
@@ -69,12 +78,8 @@ for (let yLinha = 0; yLinha < canvas.height; yLinha += 100) {
 
 }
 
-    canvas.addEventListener("mousemove",function(event){
-    const rect = canvas.getBoundingClientRect()
-    x = event.clientX-rect.left
-    y = event.clientY-rect.top
 
-})
+
 })
 
 
@@ -85,7 +90,7 @@ function resizeCanvas () {
     x=Math.min(Math.max(x,raio), canvas.width-raio)
     y=Math.min(Math.max(y,raio), canvas.height-raio)
    
-}
+} // faz uma leve atualização na tela do canvas
 
 
 function desenhandoPlayer() {
@@ -95,18 +100,21 @@ function desenhandoPlayer() {
     ctx.fill()
     ctx.closePath()
 
-}
+} //desenha o circulo branco que segue o jogador.
 
 function desenharTeste () {
-    ctx.fillStyle="yellow";
+    ctx.fillStyle="Red";
     for (let inimigo of perigosos){
         ctx.fillRect(inimigo.x,inimigo.y, inimigo.lado, inimigo.lado)
     }
-}
+} //desenha os seres vermelhos
 
 function atualizarPosicao () {
     quadradox +=speedx
     quadradoy +=speedy
+
+
+    
 
      if (quadradox+lado>canvas.width || quadradox-lado<0){
         speedx= -speedx
@@ -117,6 +125,36 @@ function atualizarPosicao () {
     }
 
     
+     novaY = y.y
+     novaX = x.x
+
+     if (setas.ArrowUp) {
+    novaY -=y.vel;
+    }
+    if (setas.ArrowDown) {
+    novaY+= y.vel;
+    }
+    if (setas.ArrowLeft) {
+    novaX-=x.vel;
+    }
+    if (setas.ArrowRight) {
+    novaX += x.vel;
+    }
+
+    
+    if (novaX - x.raio < 0) {
+    novaX =x.x;
+    }
+    if (novaX + x.raio > canvas.width) {
+    novaX= x.x;
+     }
+    if (novaY - y.raio < 0) {
+    novaY =y.y;
+    }
+    if (novaY + y.raio > canvas.height) {
+    novaY =y.y;
+    }
+
     for (let inimigo of perigosos){
         inimigo.x+= inimigo.velX
         inimigo.y+= inimigo.velY
@@ -128,7 +166,7 @@ function atualizarPosicao () {
             inimigo.velY *= -1
         }
     }
-}
+} //atualiza a posição criando velocidade
 
 
 
@@ -155,7 +193,39 @@ function animar () {
 
     const colidiuVerde = disX < raio + lado / 2 && disY < raio + lado / 2;
 
-}
+
+    
+document.addEventListener('keydown', function(e) {
+  if (e.key === "ArrowUp") {
+    setas.ArrowUp = true;
+  }
+  if (e.key === "ArrowDown") {
+    setas.ArrowDown = true;
+  }
+  if (e.key === "ArrowLeft") {
+    setas.ArrowLeft = true;
+  }
+  if (e.key === "ArrowRight") {
+    setas.ArrowRight = true;
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  if (e.key === "ArrowUp") {
+    setas.ArrowUp = false;
+  }
+  if (e.key === "ArrowDown") {
+    setas.ArrowDown = false;
+  }
+  if (e.key === "ArrowLeft") {
+    setas.ArrowLeft = false;
+  }
+  if (e.key === "ArrowRight") {
+    setas.ArrowRight = false;
+  }
+});
+
+} //anima e faz com que tudo o que está descrito nas funções funcionar
 
 
 function verificarColisao() {
@@ -176,11 +246,12 @@ function verificarColisao() {
     
     return false;
 
-}
+} //verifica a colisão
 
 function verificarColisaoComPerigoso (obj) {
     const distX = Math.abs (x-(obj.x+lado/2))
     const distY = Math.abs (y-(obj.y+lado/2))
 
     return distX <raio +obj.lado/2 && distY <raio +obj.lado/2
-}
+} //verifica a colisão com o vermelho.
+
