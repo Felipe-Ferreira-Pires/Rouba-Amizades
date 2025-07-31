@@ -13,10 +13,14 @@ let quadradox= 500
 let quadradoy= 100
 let perderx = 500
 let perdery = 500
+let bandeirax = 0
+let bandeiray = 0
 let speedx = 0
 let speedy = 6
 let lado = 30
 let lado2 = 30
+let ladoB = 20
+let ladoB2 = 20
 let nomeJogador = ""
 let corPersonagem = "white";
 let canvas 
@@ -24,6 +28,10 @@ let novaX,novaY
 let ctx
 let jogador
 let vel = 5
+let pontuacao = 0
+
+let checkpoint = false
+
 const perigosos = []
 
 
@@ -111,6 +119,15 @@ function desenharTeste () {
     }
 } //desenha os seres vermelhos
 
+function desenharBandeira () {
+    ctx.beginPath()
+    bandeiray= canvas.height/2
+    ctx.rect(bandeirax,bandeiray,ladoB,ladoB)
+    ctx.fillStyle = "Purple"
+    ctx.fill()
+    ctx.closePath()
+}
+
 function atualizarPosicao () {
     quadradox +=speedx
     quadradoy +=speedy
@@ -177,22 +194,27 @@ function animar () {
     desenharTeste()
     atualizarPosicao()
     verificarColisao()
-   
+    DesenharPontuacao()
+    desenharBandeira()
+
+    
+    
+    if (verificarColisaoComBandeira()) {
+        console.log ("Funcionou")
+        pontuacao++
+    } 
 
     requestAnimationFrame(animar);
 
     
     for (let inimigo of perigosos) {
         if (verificarColisaoComPerigoso(inimigo)){  
+        x = canvas.width/2
+        y = canvas.height/2
         inimigo.x = Math.random() * (canvas.width -inimigo.lado)
         inimigo.y = Math.random() * (canvas.height -inimigo.lado)
         }
     }
-
-    const disX = Math.abs(x - (quadradox + lado / 2));
-    const disY = Math.abs(y - (quadradoy + lado / 2));
-
-    const colidiuVerde = disX < raio + lado / 2 && disY < raio + lado / 2;
 
 
 
@@ -220,13 +242,31 @@ function verificarColisao() {
 } //verifica a colisão
 
 function verificarColisaoComPerigoso (obj) {
+    
     const distX = Math.abs (x-(obj.x+lado/2))
     const distY = Math.abs (y-(obj.y+lado/2))
 
     return distX <raio +obj.lado/2 && distY <raio +obj.lado/2
+
+
 } //verifica a colisão com o vermelho.
 
+function verificarColisaoComBandeira () {
+    const DistX= Math.abs (x-(bandeirax+ladoB/2))
+    const DistY = Math.abs (y-(bandeiray+ladoB/2))
 
+    if ( DistX <raio +ladoB/2 && DistY <raio + ladoB/2 ) {
+        return true
+        console.log ("Verificou")
+    } 
+    return false
+}
+
+function DesenharPontuacao () {
+    ctx.fillStyle = "Black"
+    ctx.font = "30px Arial"
+    ctx.fillText ("Pontuação: "+ pontuacao, 100, 40)
+}
     
 document.addEventListener('keydown', function(e) {
   if (e.key.toLocaleLowerCase() === "w") {
