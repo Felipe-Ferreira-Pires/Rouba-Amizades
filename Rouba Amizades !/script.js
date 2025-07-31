@@ -23,15 +23,17 @@ let canvas
 let novaX,novaY
 let ctx
 let jogador
+let vel = 5
 const perigosos = []
 
 
-let setas ={
-    ArrowUp: false,
-    ArrowDown: false,
-    ArrowLeft: false,
-    ArrowRight: false
-}
+
+let setas = {
+  ArrowUp: false,
+  ArrowDown: false,
+  ArrowLeft: false,
+  ArrowRight: false
+};
 
 
 function desenharTelaJogo () {
@@ -125,36 +127,35 @@ function atualizarPosicao () {
     }
 
     
-     novaY = y.y
-     novaX = x.x
+     novaY = y
+     novaX = x
 
-     if (setas.ArrowUp) {
-    novaY -=y.vel;
+        
+    if (setas.ArrowUp) {
+    novaY -=vel;
     }
     if (setas.ArrowDown) {
-    novaY+= y.vel;
-    }
+    novaY   += vel;
+     }
     if (setas.ArrowLeft) {
-    novaX-=x.vel;
+    novaX   -=vel;
     }
     if (setas.ArrowRight) {
-    novaX += x.vel;
+    novaX +=vel;
     }
 
-    
-    if (novaX - x.raio < 0) {
-    novaX =x.x;
-    }
-    if (novaX + x.raio > canvas.width) {
-    novaX= x.x;
-     }
-    if (novaY - y.raio < 0) {
-    novaY =y.y;
-    }
-    if (novaY + y.raio > canvas.height) {
-    novaY =y.y;
-    }
+        if (setas.ArrowUp) novaY -=vel;
+        if (setas.ArrowDown) novaY +=vel;
+        if (setas.ArrowLeft) novaX -=vel;
+        if (setas.ArrowRight) novaX +=vel;
 
+        if (novaX - raio< 0) novaX = raio;
+        if (novaX + raio > canvas.width) novaX = canvas.width - raio
+        if (novaY - raio< 0) novaY = raio;
+        if (novaY + raio > canvas.width) novaY = canvas.height - raio
+
+        x=novaX
+        y=novaY
     for (let inimigo of perigosos){
         inimigo.x+= inimigo.velX
         inimigo.y+= inimigo.velY
@@ -194,36 +195,6 @@ function animar () {
     const colidiuVerde = disX < raio + lado / 2 && disY < raio + lado / 2;
 
 
-    
-document.addEventListener('keydown', function(e) {
-  if (e.key === "ArrowUp") {
-    setas.ArrowUp = true;
-  }
-  if (e.key === "ArrowDown") {
-    setas.ArrowDown = true;
-  }
-  if (e.key === "ArrowLeft") {
-    setas.ArrowLeft = true;
-  }
-  if (e.key === "ArrowRight") {
-    setas.ArrowRight = true;
-  }
-});
-
-document.addEventListener('keyup', function(e) {
-  if (e.key === "ArrowUp") {
-    setas.ArrowUp = false;
-  }
-  if (e.key === "ArrowDown") {
-    setas.ArrowDown = false;
-  }
-  if (e.key === "ArrowLeft") {
-    setas.ArrowLeft = false;
-  }
-  if (e.key === "ArrowRight") {
-    setas.ArrowRight = false;
-  }
-});
 
 } //anima e faz com que tudo o que está descrito nas funções funcionar
 
@@ -255,3 +226,35 @@ function verificarColisaoComPerigoso (obj) {
     return distX <raio +obj.lado/2 && distY <raio +obj.lado/2
 } //verifica a colisão com o vermelho.
 
+
+    
+document.addEventListener('keydown', function(e) {
+  if (e.key.toLocaleLowerCase() === "w") {
+    setas.ArrowUp = true;
+  }
+  if (e.key.toLocaleLowerCase() === "s") {
+    setas.ArrowDown = true;
+  }
+  if (e.key.toLocaleLowerCase() === "a") {
+    setas.ArrowLeft = true;
+  }
+  if (e.key.toLocaleLowerCase() === "d") {
+    setas.ArrowRight = true;
+    console.log ("teste")
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  if (e.key.toLocaleLowerCase()=== "w") {
+    setas.ArrowUp = false;
+  }
+  if (e.key.toLocaleLowerCase() === "s") {
+    setas.ArrowDown = false;
+  }
+  if (e.key.toLocaleLowerCase() === "a") {
+    setas.ArrowLeft = false;
+  }
+  if (e.key.toLocaleLowerCase() === "d") {
+    setas.ArrowRight = false;
+  }
+});
