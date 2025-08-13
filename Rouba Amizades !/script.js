@@ -3,6 +3,49 @@ const BtnJogar = document.getElementById('iniciarJogo');
 const CorPersonagem = document.getElementById("corPersonagem");
 const NomePersonagem = document.getElementById("nomePersonagem");
 
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAZUjhUzZXxCnPvQZ9e9XXPdEWJwD302Sk",
+  authDomain: "rouba-amizades.firebaseapp.com",
+  databaseURL: "https://rouba-amizades-default-rtdb.firebaseio.com",
+  projectId: "rouba-amizades",
+  storageBucket: "rouba-amizades.firebasestorage.app",
+  messagingSenderId: "43287587360",
+  appId: "1:43287587360:web:998c040ced285e9a6eaa45"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database()
+const rankingRef = database.ref("ranking");
+let jogadorId = null
+
+const rankingDiv = document.getElementById( 'ranking')
+const jogadoresRef = database.ref('jogadores')
+
+
+const rankingLista = document.getElementById( 'rankingLista')
+const rankingMenu = document.getElementById( 'rankingMenu')
+
+let nomeJogador = "";
+
+function SalvarPontuacaoNoFireBase () {
+    if (!nomeJogador || pontuacao<0) {
+        console.log ("Não salva: nomeJogador ou pontuação inválida");
+        return
+    }
+    console.log (`Salvando pontuação: ${pontuacao} para ${nomeJogador}`)
+
+    rankingRef.child(jogadorId).set({
+        nome: nomeJogador,
+        pontos: pontuacao,
+        data: firebase.database.ServerValue.TIMESTAMP
+    }).then (() => {
+        console.log("A pontuação foi salva com sucesso")
+    }).catch((error) => {
+        console.log("Erro ao salvar a pontuacao no FireBase"+error)
+    })
+  }
 let raio = 20;
 let x = 500;
 let y = 500;
@@ -14,11 +57,10 @@ let bandeirax = 0;
 let bandeiray = 0;
 let speedx = 0;
 let speedy = 6;
-let lado = 30;
+let lado = 60;
 let lado2 = 30;
 let ladoB = 20;
 let ladoB2 = 20;
-let nomeJogador = "";
 let corPersonagem = "white";
 let canvas;
 let novaX, novaY;
@@ -26,6 +68,13 @@ let ctx;
 let jogador;
 let vel = 5;
 let pontuacao = 0;
+let jogadoresOutros = []
+
+const imagemDeFundo = new Image ()
+const imagemCriança = new Image ()
+imagemCriança.src = "criança.webp"
+const imagemBola = new Image()
+imagemBola.src = "bola.png"
 
 let checkpoint = false;
 const perigosos = [];
@@ -43,21 +92,26 @@ let tocouPortalDireito = false;
 let portalEsquerdo = { 
   x: 0,
   y: 0,
-  lado: 30,
+  lado: 50,
   ativo: true
 };
 let portalDireito = { 
   x: 0,
   y: 0,
-  lado: 30,
+  lado: 50,
   ativo: true 
 };
+
+
 
 
 BtnJogar.addEventListener('click', () => {
   if (NomePersonagem.value.trim() !== "") {
     nomeJogador = NomePersonagem.value.trim();
+    jogadorId = nomeJogador+"_"+Date.now  ()
+    jogadoresRef.child(jogadorId).onDisconnect().remove()
     TelaInicial.classList.add('hidden');
+    rankingDiv.style.display ="block"
     corPersonagem = document.getElementById("corPersonagem").value;
     canvas = document.createElement("canvas");
     canvas.id = "meuCanvas";
@@ -66,12 +120,16 @@ BtnJogar.addEventListener('click', () => {
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
     animar();
+    SalvarPontuacaoNoFireBase()
+    imagemDeFundo.src="fundo.jpg"
+
   } else {
     alert("Por favor insira um nome");
   }
 
   let quantidadeMaxima = 20;
   let contador = 0;
+  
 
   for (let yLinha = 0; yLinha < canvas.height; yLinha += 100) {
     for (let xColuna = 0; xColuna < canvas.width; xColuna += 100) {
@@ -89,11 +147,35 @@ BtnJogar.addEventListener('click', () => {
   }
 });
 
+
+rankingRef.orderByChild ('pontos').limitToLast(10).on('value',
+   (snapshot) => {
+    const dados = snapshot.val () || {};
+    const ranking = Object.values(dados).sort((a,b) => b.pontos-a.pontos)
+    let htmlMenu = '<h3> Melhores Pontuações </h3><ol>'
+    ranking.slice (0,5).forEach(jogador=> {
+        htmlMenu += `<li>${jogador.nome}: ${jogador.pontos} </li>`
+    })
+        htmlMenu += `</ol>`
+
+        rankingMenu.innerHTML = htmlMenu
+
+        let html = ""
+        ranking.slice(0,5).forEach(jogador=> {
+            html += `<div>${jogador.nome}: ${jogador.pontos}</div>`
+        })
+
+        rankingLista.innerHTML = html
+   })
+
+
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   x = Math.min(Math.max(x, raio), canvas.width - raio);
   y = Math.min(Math.max(y, raio), canvas.height - raio);
+ 
+
 }
 
 function desenhandoPlayer() {
@@ -107,7 +189,7 @@ function desenhandoPlayer() {
 function desenharTeste() {
   ctx.fillStyle = "Red";
   for (let inimigo of perigosos) {
-    ctx.fillRect(inimigo.x, inimigo.y, inimigo.lado, inimigo.lado);
+    ctx.drawImage (imagemCriança,inimigo.x, inimigo.y, inimigo.lado, inimigo.lado);
   }
 }
 
@@ -121,16 +203,16 @@ function desenharPortais() {
 
   if (portalEsquerdo.ativo) {
     ctx.beginPath();
-    ctx.rect(portalEsquerdo.x, portalEsquerdo.y, portalEsquerdo.lado, portalEsquerdo.lado);
-    ctx.fillStyle = "blue";
+    ctx.drawImage(imagemBola,portalEsquerdo.x, portalEsquerdo.y, portalEsquerdo.lado, portalEsquerdo.lado);
+    ctx.fillStyle = "purple";
     ctx.fill();
     ctx.closePath();
   }
 
   if (portalDireito.ativo) {
     ctx.beginPath();
-    ctx.rect(portalDireito.x, portalDireito.y, portalDireito.lado, portalDireito.lado);
-    ctx.fillStyle = "green";
+    ctx.drawImage(imagemBola,portalDireito.x, portalDireito.y, portalDireito.lado, portalDireito.lado);
+    ctx.fillStyle = "purple";
     ctx.fill();
     ctx.closePath();
   }
@@ -169,14 +251,30 @@ function atualizarPosicao() {
   }
 }
 
+
+jogadoresRef.on("value", (snapshot) => {
+    const todos = snapshot.val() || {}
+    jogadoresOutros = []
+
+    for(let id in todos) {
+        if (id !==jogadorId){
+            jogadoresOutros.push(todos[id])
+        }
+    }
+})
+
 function animar() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  //ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(imagemDeFundo,0,0, canvas.width, canvas.height)
+
   desenhandoPlayer();
   desenharTeste();
   atualizarPosicao();
   verificarColisao();
   DesenharPontuacao();
   desenharPortais();
+  atualizarPosicaoFireBase()
+  desenharOutrosJogadores()
 
   if (portalEsquerdo.ativo && verificarColisaoComPortal(portalEsquerdo)) {
   tocouPortalEsquerdo = true;
@@ -203,11 +301,15 @@ if (portalDireito.ativo && verificarColisaoComPortal(portalDireito)) {
 
 if (tocouPortalEsquerdo && x >= canvas.width / 2 - raio && x <= canvas.width / 2 + raio) {
   pontuacao++;
+  SalvarPontuacaoNoFireBase();
+
   tocouPortalEsquerdo = false;
 }
 
 if (tocouPortalDireito && x >= canvas.width / 2 - raio && x <= canvas.width / 2 + raio) {
   pontuacao++;
+  SalvarPontuacaoNoFireBase();
+
   tocouPortalDireito = false;
 }
 
@@ -215,11 +317,22 @@ if (tocouPortalDireito && x >= canvas.width / 2 - raio && x <= canvas.width / 2 
 
   for (let inimigo of perigosos) {
     if (verificarColisaoComPerigoso(inimigo)) {
+      if (pontuacao >= 0.5) {
+
       x = canvas.width / 2;
       y = canvas.height / 2;
       inimigo.x = Math.random() * (canvas.width - inimigo.lado);
       inimigo.y = Math.random() * (canvas.height - inimigo.lado);
-    }
+      pontuacao -= 0.5
+      } else {
+      x = canvas.width / 2;
+      y = canvas.height / 2;
+      inimigo.x = Math.random() * (canvas.width - inimigo.lado);
+      inimigo.y = Math.random() * (canvas.height - inimigo.lado);
+      }
+      SalvarPontuacaoNoFireBase();
+
+    } 
   }
 
   requestAnimationFrame(animar);
@@ -249,6 +362,35 @@ function DesenharPontuacao() {
   ctx.fillStyle = "Black";
   ctx.font = "30px Arial";
   ctx.fillText("Pontuação: " + pontuacao, 100, 40);
+}
+
+
+function desenharOutrosJogadores () {
+    for (outros of jogadoresOutros) {
+        ctx.beginPath
+        ctx.arc(outros.x,outros.y,raio,0,Math.PI*2)
+        ctx.fillStyle= outros.cor || "grey"
+        ctx.fill()
+        ctx.closePath()
+
+        ctx.font= "14px Arial"
+        ctx.fillStyle ="White"
+        ctx.fillText(outros.nome, outros.x+raio+5,outros.y);
+
+
+    }
+}
+
+
+function atualizarPosicaoFireBase () {
+    if (jogadorId) {
+        jogadoresRef.child(jogadorId).set ({
+            x:x,
+            y:y,
+            cor:corPersonagem,
+            nome:nomeJogador,
+        })
+    }
 }
 
 document.addEventListener('keydown', function (e) {
