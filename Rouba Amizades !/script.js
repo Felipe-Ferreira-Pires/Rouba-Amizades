@@ -148,6 +148,7 @@ BtnJogar.addEventListener('click', () => {
 });
 
 
+
 rankingRef.orderByChild ('pontos').limitToLast(10).on('value',
    (snapshot) => {
     const dados = snapshot.val () || {};
@@ -258,7 +259,12 @@ jogadoresRef.on("value", (snapshot) => {
 
     for(let id in todos) {
         if (id !==jogadorId){
-            jogadoresOutros.push(todos[id])
+          
+            jogadoresOutros.push({
+              id:id,
+              ... todos [id] // '...' = spreed
+            })
+           
         }
     }
 })
@@ -275,6 +281,11 @@ function animar() {
   desenharPortais();
   atualizarPosicaoFireBase()
   desenharOutrosJogadores()
+  atualizarPosicaoOutrosJogadores()
+
+  for (outros2 of jogadoresOutros) { 
+     empurrarOutrosJogadores()
+  }
 
   if (portalEsquerdo.ativo && verificarColisaoComPortal(portalEsquerdo)) {
   tocouPortalEsquerdo = true;
@@ -381,6 +392,50 @@ function desenharOutrosJogadores () {
     }
 }
 
+function empurrarOutrosJogadores () {
+  for (let outros2 of jogadoresOutros ) {
+    let distx = outros2.x-x
+    let disty = outros2.y-y
+    let d = Math.sqrt(distx * distx + disty * disty);
+    
+    console.log (d)
+ 
+    if (d <=40 ) {
+      console.log ("foi")
+      let nx = distx / d
+      let ny = disty/ d
+
+      let forca = 5;
+
+      outros2.velX = nx * forca
+      outros2.velY = ny * forca
+
+      jogadoresRef.child(outros2.id).update ({
+        velX: outros2.velX,
+        velY: outros2.velY
+
+        
+      })
+    }
+  }
+}
+  
+function atualizarPosicaoOutrosJogadores() {
+  for (let outros of jogadoresOutros) {
+    if (outros.velX || outros.velY) {
+      outros.x += outros.velX || 0;
+      outros.y += outros.velY || 0;
+
+      // Desaceleração gradual para parar suavemente
+      outros.velX *= 0.9;
+      outros.velY *= 0.9;
+
+      // Garante que não saiam do canvas
+      outros.x = Math.max(raio, Math.min(canvas.width - raio, outros.x));
+      outros.y = Math.max(raio, Math.min(canvas.height - raio, outros.y));
+
+        }    }
+}
 
 function atualizarPosicaoFireBase () {
     if (jogadorId) {
