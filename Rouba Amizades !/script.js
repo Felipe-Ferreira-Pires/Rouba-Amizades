@@ -69,6 +69,7 @@ let jogador;
 let vel = 5;
 let pontuacao = 0;
 let jogadoresOutros = []
+let velX, velY
 
 const imagemDeFundo = new Image ()
 const imagemCriança = new Image ()
@@ -282,9 +283,11 @@ function animar() {
   atualizarPosicaoFireBase()
   desenharOutrosJogadores()
   atualizarPosicaoOutrosJogadores()
+  
 
   for (outros2 of jogadoresOutros) { 
      empurrarOutrosJogadores()
+     moverComVelocidade()
   }
 
   if (portalEsquerdo.ativo && verificarColisaoComPortal(portalEsquerdo)) {
@@ -391,34 +394,55 @@ function desenharOutrosJogadores () {
 
     }
 }
-
-function empurrarOutrosJogadores () {
-  for (let outros2 of jogadoresOutros ) {
-    let distx = outros2.x-x
-    let disty = outros2.y-y
+function empurrarOutrosJogadores() {
+  for (let outros2 of jogadoresOutros) {
+    let distx = outros2.x - x;
+    let disty = outros2.y - y;
     let d = Math.sqrt(distx * distx + disty * disty);
-    
-    console.log (d)
- 
-    if (d <=40 ) {
-      console.log ("foi")
-      let nx = distx / d
-      let ny = disty/ d
+
+    // Se estiverem próximos o suficiente
+    if (d > 0 && d < raio * 2) {
+      let nx = distx / d;
+      let ny = disty / d;
 
       let forca = 5;
 
-      outros2.velX = nx * forca
-      outros2.velY = ny * forca
+      // Aplica a velocidade no jogador que foi atingido
+      let velXempurrao = nx * forca;
+      let velYempurrao = ny * forca;
 
-      jogadoresRef.child(outros2.id).update ({
-        velX: outros2.velX,
-        velY: outros2.velY
-
-        
-      })
+      // Garante que não vai enviar NaN
+      if (!isNaN(velXempurrao) && !isNaN(velYempurrao)) {
+        jogadoresRef.child(outros2.id).update({
+          velX: velXempurrao,
+          velY: velYempurrao
+        });
+      }
     }
   }
 }
+
+
+
+function moverComVelocidade() {
+  x += velX;
+  y += velY;
+
+  // Desacelera suavemente
+  velX *= 0.9;
+  velY *= 0.9;
+
+  // Atualiza posição no BD
+  jogadoresRef.child(jogadorId).update({
+    x: x,
+    y: y,
+    velX: velX,
+    velY: velY
+  });
+}
+
+
+
   
 function atualizarPosicaoOutrosJogadores() {
   for (let outros of jogadoresOutros) {
@@ -440,12 +464,14 @@ function atualizarPosicaoOutrosJogadores() {
 function atualizarPosicaoFireBase () {
     if (jogadorId) {
         jogadoresRef.child(jogadorId).set ({
-            x:x,
-            y:y,
-            cor:corPersonagem,
-            nome:nomeJogador,
-        })
-    }
+        x:x,
+        y:y,
+        cor:corPersonagem,
+        nome:nomeJogador,
+        velX: velX || 0,
+        velY: velY || 0
+ })
+}
 }
 
 document.addEventListener('keydown', function (e) {
