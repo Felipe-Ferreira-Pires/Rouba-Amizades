@@ -69,7 +69,8 @@ let jogador;
 let vel = 5;
 let pontuacao = 0;
 let jogadoresOutros = []
-let velX, velY
+let velX = 0, velY = 0;
+
 
 const imagemDeFundo = new Image ()
 const imagemCriança = new Image ()
@@ -285,7 +286,7 @@ function animar() {
   atualizarPosicaoOutrosJogadores()
   
 
-  for (outros2 of jogadoresOutros) { 
+  for (let outros2 of jogadoresOutros) { 
      empurrarOutrosJogadores()
      moverComVelocidade()
   }
@@ -381,7 +382,7 @@ function DesenharPontuacao() {
 
 function desenharOutrosJogadores () {
     for (outros of jogadoresOutros) {
-        ctx.beginPath
+        ctx.beginPath()
         ctx.arc(outros.x,outros.y,raio,0,Math.PI*2)
         ctx.fillStyle= outros.cor || "grey"
         ctx.fill()
@@ -411,6 +412,8 @@ function empurrarOutrosJogadores() {
       let velXempurrao = nx * forca;
       let velYempurrao = ny * forca;
 
+      
+
       // Garante que não vai enviar NaN
       if (!isNaN(velXempurrao) && !isNaN(velYempurrao)) {
         jogadoresRef.child(outros2.id).update({
@@ -438,8 +441,11 @@ function moverComVelocidade() {
     y: y,
     velX: velX,
     velY: velY
-  });
-}
+
+    
+  }); 
+  
+  }
 
 
 
@@ -447,8 +453,8 @@ function moverComVelocidade() {
 function atualizarPosicaoOutrosJogadores() {
   for (let outros of jogadoresOutros) {
     if (outros.velX || outros.velY) {
-      outros.x += outros.velX || 0;
-      outros.y += outros.velY || 0;
+      outros.x += outros.velX ;
+      outros.y += outros.velY ;
 
       // Desaceleração gradual para parar suavemente
       outros.velX *= 0.9;
@@ -461,18 +467,25 @@ function atualizarPosicaoOutrosJogadores() {
         }    }
 }
 
-function atualizarPosicaoFireBase () {
-    if (jogadorId) {
-        jogadoresRef.child(jogadorId).set ({
-        x:x,
-        y:y,
-        cor:corPersonagem,
-        nome:nomeJogador,
-        velX: velX || 0,
-        velY: velY || 0
- })
+
+function atualizarPosicaoFireBase() {
+  if (jogadorId) {
+    if (isNaN(x)) x = 0;
+    if (isNaN(y)) y = 0;
+    if (isNaN(velX)) velX = 0;
+    if (isNaN(velY)) velY = 0;
+
+    jogadoresRef.child(jogadorId).set({
+      x: x,
+      y: y,
+      cor: corPersonagem,
+      nome: nomeJogador,
+      velX: velX,
+      velY: velY
+    });
+  }
 }
-}
+
 
 document.addEventListener('keydown', function (e) {
   if (e.key.toLowerCase() === "w") setas.ArrowUp = true;
